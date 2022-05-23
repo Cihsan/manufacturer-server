@@ -27,6 +27,14 @@ async function run() {
             res.send({ success: 'Added Product Successfully' })
             
         }) 
+
+        //get
+        app.get('/review-get', async (req, res) => {
+            const query = {}
+            const cursor = reviews.find(query)
+            const result = await cursor.toArray()
+            res.send(result)
+        })
        
     }
     finally {
