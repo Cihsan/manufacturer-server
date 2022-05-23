@@ -19,15 +19,14 @@ async function run() {
     try {
         await client.connect()
         const test = client.db("testDB").collection("testcollection");
+        const reviews = client.db("reviewDB").collection("reviewcollection");
         
-
-        //get
-        app.get('/my-items', async (req, res) => {
-            const query = {}
-            const cursor = test.find(query)
-            const result = await cursor.toArray()
-            res.send(result)
-        })
+        app.post('/review-post', async (req, res) => {
+            const newPD = req.body
+            const result = await reviews.insertOne(newPD);
+            res.send({ success: 'Added Product Successfully' })
+            
+        }) 
        
     }
     finally {
