@@ -36,23 +36,30 @@ async function run() {
             const result = await cursor.toArray()
             res.send(result)
         })
+
+        app.get('/profile-get', async (req, res) => {
+            const query = {}
+            const cursor = userprifile.find(query)
+            const result = await cursor.toArray()
+            res.send(result)
+        })
         
         app.post('/profile-post', async (req, res) => {
-            const submitprofile = req.body;
+            const submit = req.body;
             const query = {
-                date: submitprofile.date, 
-                phone: submitprofile.phone, 
-                study: submitprofile.study, 
-                country: submitprofile.country, 
-                state: submitprofile.state, 
-                zip: submitprofile.zip, 
-                link: submitprofile.link
+                date: submit.date, 
+                phone: submit.phone, 
+                study: submit.study, 
+                country: submit.country, 
+                state: submit.state, 
+                zip: submit.zip, 
+                link: submit.link
                 }
             const exists = await userprifile.findOne(query);
             if (exists) {
-                return res.send({ success: false, submitprofile: exists })
+                return res.send({ success: false, submit: exists })
             }
-            const result = await userprifile.insertOne(submitprofile);
+            const result = await userprifile.insertOne(submit);
             return res.send({ success: true, result });
         })
 
