@@ -20,6 +20,7 @@ async function run() {
         await client.connect()
         const test = client.db("testDB").collection("testcollection");
         const reviews = client.db("reviewDB").collection("reviewcollection");
+        const userprifile = client.db("prifileDB").collection("prifileCollection");
         
         app.post('/review-post', async (req, res) => {
             const newPD = req.body
@@ -35,7 +36,26 @@ async function run() {
             const result = await cursor.toArray()
             res.send(result)
         })
-       
+        
+        app.post('/profile-post', async (req, res) => {
+            const submitprofile = req.body;
+            const query = {
+                date: submitprofile.date, 
+                phone: submitprofile.phone, 
+                study: submitprofile.study, 
+                country: submitprofile.country, 
+                state: submitprofile.state, 
+                zip: submitprofile.zip, 
+                link: submitprofile.link
+                }
+            const exists = await userprifile.findOne(query);
+            if (exists) {
+                return res.send({ success: false, submitprofile: exists })
+            }
+            const result = await userprifile.insertOne(submitprofile);
+            return res.send({ success: true, result });
+        })
+
     }
     finally {
         //await client.close()
