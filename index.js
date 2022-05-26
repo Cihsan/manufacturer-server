@@ -64,12 +64,7 @@ async function run() {
             res.send(result)
         })
 
-        /* app.get('/profile-get', async (req, res) => {
-            const query = {}
-            const cursor = userprifile.find(query)
-            const result = await cursor.toArray()
-            res.send(result)
-        }) */
+        
         //
         app.get('/profile-get', verifyJWT, async (req, res) => {
             const email = req.query.email;
@@ -136,8 +131,8 @@ async function run() {
             res.send({ admin: isAdmin })
           })
       
-          
-          app.put('/user/admin/:email', verifyJWT,async (req, res) => {
+          //make admin
+          app.put('/user/admin/:email',verifyJWT, async  (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
             const updateDoc = {
