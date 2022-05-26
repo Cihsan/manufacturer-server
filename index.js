@@ -48,15 +48,15 @@ async function run() {
                 res.status(403).send({ message: 'forbidden' });
             }
         }
-        //user entry
-    
+        
+        //Review Post
         app.post('/review-post', verifyJWT, async (req, res) => {
             const review = req.body
             const result = await reviews.insertOne(review);
             res.send({ success: 'Added review Successfully' })
         })
         
-        //get
+        //Review Get
         app.get('/review-get', async (req, res) => {
             const query = {}
             const cursor = reviews.find(query)
@@ -65,7 +65,7 @@ async function run() {
         })
 
         
-        //
+        //My Profile get
         app.get('/profile-get', verifyJWT, async (req, res) => {
             const email = req.query.email;
             const decodedEmail = req.decoded.email;
@@ -78,7 +78,7 @@ async function run() {
               return res.status(403).send({ message: 'forbidden access' });
             }
           });
-
+          //My Profile Post
         app.post('/profile-post', verifyJWT, async (req, res) => {
             const submit = req.body;
             const query = {
@@ -100,30 +100,32 @@ async function run() {
             return res.send({ success: true, result });
         })
 
-        //product
+        //Add Product
         app.post('/product-post', async (req, res) => {
             const productPost = req.body
             const result = await product.insertOne(productPost);
             res.send({ success: 'Added Product Successfully' })
         })
+        //Display Product
         app.get('/product-get', async (req, res) => {
             const query = {}
             const cursor = product.find(query)
             const result = await cursor.toArray()
             res.send(result)
         })
+        //Delete Product from Display and database
         app.delete('/product-del/:id', async (req, res) => {
             const id = req.params.id
             const query = { _id: ObjectId(id) }
             const result = await product.deleteOne(query)
             res.send(result)
         })
-        //user
+        //Login Display
         app.get('/user', async (req, res) => {
             const users = await userlogin.find().toArray();
             res.send(users);
           });
-      
+          
           app.get('/admin/:email', async (req, res) => {
             const email = req.params.email;
             const user = await userlogin.findOne({ email: email });
