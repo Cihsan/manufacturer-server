@@ -2,10 +2,11 @@
 
 This is project design like manufacturer or factory site using react app[Live-Site](https://manufacturer-a7f2a.web.app/).
 
-* use MongoDB 
+* use MongoDB
 * use JWT 
-* use use heroku 
-* use use stripe payment 
+* use heroku 
+* use stripe payment 
+* use all kind of api
 
 Open [live-site](https://manufacturer-a7f2a.web.app/).
 
