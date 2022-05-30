@@ -7,10 +7,12 @@ const app = express()
 const jwt = require('jsonwebtoken');
 app.use(cors()) //
 app.use(express.json()) //for parse
+const stripe = require('stripe')(process.env.STRIPE_KEY);
 
 app.get('/', (req, res) => {
     res.send('Welcome To Manufacture Server')
 })
+/* https://safe-inlet-78940.herokuapp.com */
 
 function verifyJWT(req, res, next) {
     const authHeader = req.headers.authorization;
@@ -37,6 +39,7 @@ async function run() {
         const userprifile = client.db("prifileDB").collection("prifileCollection");
         const userlogin = client.db("userLoginDB").collection("userLoginCollection");
         const product = client.db("productDB").collection("productCollection");
+        const orders = client.db("orderDB").collection("orderCollection");
 
         const verifyAdmin = async (req, res, next) => {
             const requester = req.decoded.email;
@@ -48,15 +51,67 @@ async function run() {
                 res.status(403).send({ message: 'forbidden' });
             }
         }
+        //payment
+
+        app.post('/create-payment-intent', async (req, res) => {
+            const service = req.body;
+            const price = service.price;
+            const amount = price * 100;
+            const paymentIntent = await stripe.paymentIntents.create({
+                amount: amount,
+                currency: 'usd',
+                payment_method_types: ['card']
+            });
+            res.send({ clientSecret: paymentIntent.client_secret })
+        });
         
-        //Review Post
+        //Purchase
+        app.post('/order/:id', async (req, res) => {
+            const order = req.body
+            const result = await orders.insertOne(order);
+            res.send({ success: 'Payment Successfully Done' })
+        })
+        //Manage-all-order
+        app.get('/order-all', async (req, res) => {
+            const query = {}
+            const cursor = orders.find(query)
+            const result = await cursor.toArray()
+            res.send(result)
+        })
+        //Manage-all-order
+        app.put('/order-status/:id', async (req, res) => {
+            const id = req.params.id;
+            const filter = { _id: ObjectId(id) };
+            const updateDoc = {
+                $set: { status: 'Paid' },
+            };
+            const result = await orders.updateOne(filter, updateDoc);
+            res.send(result);
+        })
+        //manage-all-orders
+        app.delete('/order-status/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) }
+            const result = await orders.deleteOne(query)
+            res.send(result)
+        })
+        //Myorders
+        app.get('/order', async (req, res) => {
+            const email = req.query.email;
+                const query = { email: email };
+                const bookings = await orders.find(query).toArray();
+                res.send(bookings);
+            
+             
+        });
+        //Add Review Post
         app.post('/review-post', verifyJWT, async (req, res) => {
             const review = req.body
             const result = await reviews.insertOne(review);
             res.send({ success: 'Added review Successfully' })
         })
-        
-        //Review Get
+
+        //Home Review Get
         app.get('/review-get', async (req, res) => {
             const query = {}
             const cursor = reviews.find(query)
@@ -64,21 +119,15 @@ async function run() {
             res.send(result)
         })
 
-        
-        //My Profile get
-        app.get('/profile-get', verifyJWT, async (req, res) => {
+
+        //My-Profile get
+        app.get('/profile-get', async (req, res) => {
             const email = req.query.email;
-            const decodedEmail = req.decoded.email;
-            if (email === decodedEmail) {
-              const query = { email: email };
-              const bookings = await userprifile.find(query).toArray();
-              return res.send(bookings);
-            }
-            else {
-              return res.status(403).send({ message: 'forbidden access' });
-            }
-          });
-          //My Profile Post
+                const query = { email: email };
+                const result = await userprifile.findOne(query)
+                return res.send(result);
+        });
+        //Update > My-Profile Post
         app.post('/profile-post', verifyJWT, async (req, res) => {
             const submit = req.body;
             const query = {
@@ -113,6 +162,12 @@ async function run() {
             const result = await cursor.toArray()
             res.send(result)
         })
+        app.get('/product-get/:id', async (req, res) => {
+            const id = req.params.id
+            const query = { _id: ObjectId(id) }
+            const result = await product.findOne(query)
+            res.send(result)
+        })
         //Delete Product from Display and database
         app.delete('/product-del/:id', async (req, res) => {
             const id = req.params.id
@@ -124,39 +179,39 @@ async function run() {
         app.get('/user', async (req, res) => {
             const users = await userlogin.find().toArray();
             res.send(users);
-          });
-          
-          app.get('/admin/:email', async (req, res) => {
+        });
+
+        app.get('/admin/:email', async (req, res) => {
             const email = req.params.email;
             const user = await userlogin.findOne({ email: email });
             const isAdmin = user.role === 'admin';
             res.send({ admin: isAdmin })
-          })
-      
-          //make admin
-          app.put('/user/admin/:email',verifyJWT, async  (req, res) => {
+        })
+
+        //make admin
+        app.put('/user/admin/:email', verifyJWT, async (req, res) => {
             const email = req.params.email;
             const filter = { email: email };
             const updateDoc = {
-              $set: { role: 'admin' },
+                $set: { role: 'admin' },
             };
             const result = await userlogin.updateOne(filter, updateDoc);
             res.send(result);
-          })
-          
-          //login time
-          app.put('/user/:email', async (req, res) => {
+        })
+
+        //login time
+        app.put('/user/:email', async (req, res) => {
             const email = req.params.email;
             const user = req.body;
             const filter = { email: email };
             const options = { upsert: true };
             const updateDoc = {
-              $set: user,
+                $set: user,
             };
             const result = await userlogin.updateOne(filter, updateDoc, options);
             const token = jwt.sign({ email: email }, process.env.VALID_TOKEN, { expiresIn: '1h' })
             res.send({ result, token });
-          });
+        });
     }
     finally {
         //await client.close()
